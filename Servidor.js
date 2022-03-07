@@ -1,20 +1,10 @@
-/* 
-Integrantes:
-  - García Vargas Michell Alejandro - 259663
-  - Daniel Leon Paulin - 260541
-Materia: Sistemas Distribuidos
-Fecha: 10 de diciembre del 2021
-Grupo: 30
-Semestre: 5to
-*/
-
 /* Se importan las librerias con las que va a trabajar el servidor*/
 const express = require('express'); /* Express para la creación de la API */
 const app = express(); /* Creación de la Aplicación */
 const bodyParser = require('body-parser'); /* BodyParser para poder acceder de manera sencilla a los datos POST enviados por el usuario */
 
 /* .use para especificar el directorio donde se encuentran los archivos estáticos del servidor */
-app.use(express.static(__dirname + '/public'));
+app.use(express.static('./public'));
 
 /* .set para establecer la ruta/directorio donde se van a encontrar los archivos para las peticiones, y además, se especifica su extensión, renderizar páginas con parámetros */
 app.set('view engine', 'ejs');
