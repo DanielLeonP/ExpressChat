@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/styles/Style.css">
+        <title>Chats</title>
+    </head>
+    <body>
+        <div class="todo">
+            <div id="chats">
+                <div id="buscador">
+                    <!-- Input para buscar un usuario en específico -->
+                    <form action="../resultadosBusqueda" method="get">
+                        <input type="text" name="usuario" size="10" id="barraBuscar" placeholder="Busca un chat..."><br>
+                        <button type="submit" value="buscar" id="botonBuscar"><img src="/images/search.png" class="image"></button>
+                    </form>
+                </div>
+                <div id="scroll2">
+                    <!-- Se busca que el parámetro chats no sea indefinido -->
+                    <% if(typeof chats === 'undefined') { %>
+                    <% }else{ %>                
+                        <!-- Se selecciona cada dato de chats -->
+                        <% for(chat of chats) { %> 
+                            <div id="usuarios" name="<%= chat.IdChat %>" onclick="window.location.href = 'Chat/<%= chat.IdChat %>'">
+                                <!-- se crea un div con el nombre del chat -->
+                                <%= chat.NombreChat %>
+                            </div>
+                        <% }; %>
+                    <% }; %>
+                    <!-- Se busca que la lista de chats no sea indefinida -->
+                    <% if(typeof chatMenu !== 'undefined') { %>
+                        <!-- Se selecciona cada dato de los chats -->
+                        <% for(menu of chatMenu) { %>
+                            <div id="usuarios" name="<%= menu.IdChat %>" onclick="window.location.href = '<%= menu.IdChat %>'">
+                                <!-- Se crea un div con los datos de los chats -->
+                                <%= menu.NombreChat %>
+                            </div>
+                        <% }; %>
+                    <% }; %>
+                </div>
+                <!-- Div para salir de la sesión de la API -->
+                <div id="regresar" onclick="window.location.href ='/Logout'">
+                    <a class="regresar">Salir</a>               
+                </div>
+            </div>
+            <div id="conversacion">
+                <!-- Se busca que el parámetro demensajes no sea indefinido -->
+                <% if(typeof mensajes === 'undefined'){ %>
+                <% }else{ %>
+                    <div class="nombreConversacion">
+                        <!-- Se selecciona cada dato del chat actual seleccionado -->
+                        <% for(chatactual of chatActual){ %>
+                            <!-- Se coloca el nombre del chat actual -->
+                            <h1 class="titulo"><%= chatactual.NombreChat %></h1>
+                            <!-- Se selecciona cada dato del usuario -->
+                            <% for(admin of administrador){ %>
+                                    <!-- Se verifica que el usuario sea adminsitrador o no -->
+                                    <% if(admin.Administrador === 'A'){ %>
+                                        <div class="botonAdmin">
+                                            <nav id="menu2">
+                                                <ul>
+                                                    <li><img src="/images/masopciones.png" class="imageAdmin">
+                                                        <ul>
+                                                            <!-- Se despliega una sección para eliminar el chat seleccionado -->
+                                                            <li><a onclick="window.location.href = 'EliminarChat/<%= chatactual.IdChat %>'">Eliminar</a></li>
+                                                            <!-- Se despliega un input para modificar el nombre del chat -->
+                                                            <li><a>Modificar</a>
+                                                                <ul>
+                                                                    <li>
+                                                                        <form action="ModificarChat/<%= chatactual.IdChat %>" method="get" class="modificarSeccion">
+                                                                            <input type="text" name="TextoChatModificar" size="5" placeholder="Escribe el nuevo nombre del chat ..." required class="inputModificar">
+                                                                            <button type="submit" value="Listo" class="botonModificar"><img src="/images/enviar.png" class="imageEnviar"></button>   
+                                                                        </form>                                                  
+                                                                    </li>
+                                                                </ul>
+                                                            </li>                                                    
+                                                        </ul>
+                                                    </li>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                    <% }; %>
+                                <% break; %> 
+                            <% }; %>
+                            <% break; %> 
+                        <% }; %>     
+                    </div>
+                    <div id="scroll">
+                        <!-- Se selecciona cada dato de los mensajes -->
+                        <% for(mensaje of mensajes){ %>
+                            <!-- Se verifica si el mensaje pertenece al usuario que tiene la API abierta en el preciso momento para remacarlo de otra forma y que se entienda que los mensajes pertenecen al usuario actual -->
+                            <% if(mensaje.IdUsuario === actual){ %>
+                                <div class="mensajePropio" name="">
+                                    <nav id="menu">
+                                        <ul>
+                                            <li><img src="/images/masopciones.png" class="imageMas">
+                                                <ul>
+                                                    <!-- Se despliega una sección para eliminar el mensaje seleccionado -->
+                                                    <li><a onclick="window.location.href = 'EliminarMensaje/<%= mensaje.IdMensaje %>'">Eliminar</a></li>
+                                                    <!-- Se despliega un input para modificar el texto del mensaje -->
+                                                    <li><a>Modificar</a>
+                                                        <ul>
+                                                            <li>
+                                                                <form action="ModificarMensaje/<%= mensaje.IdMensaje %>" method="get" class="modificarSeccion">
+                                                                    <input type="text" name="TextoMensajeModificar" size="5" placeholder="Escribe el nuevo mensaje ..." required class="inputModificar">
+                                                                    <button type="submit" value="Listo" class="botonModificar"><img src="/images/enviar.png" class="imageEnviar"></button>   
+                                                                </form>                                                  
+                                                            </li>
+                                                        </ul>
+                                                    </li>                                                    
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                    <!-- Se despliega quien escribio el mensaje, a que hora y dia, y el texto del mensaje -->
+                                    <h2 class="usuarioMensaje" style="margin-block-end: 0%;"><%= mensaje.Nombre %></h2><br>
+                                    <h2 class="textoMensaje"><%= mensaje.Texto %></h2><br>
+                                    <h2 class="fechaMensaje"><%= mensaje.Fecha %></h2><br>
+                                </div>
+                                <div class="esqPropio"></div>
+                            <!-- De otra forma se sabe que el mensaje no pertenece al usuario actual -->
+                            <% }else{ %>
+                                <div class="mensajeOtro" name="">
+                                    <!-- Se despliega quien escribio el mensaje, a que hora y dia, y el texto del mensaje -->
+                                    <h2 class="usuarioMensaje" style="margin-block-end: 0%;"><%= mensaje.Nombre %></h2><br>
+                                    <h2 class="textoMensaje"><%= mensaje.Texto %></h2><br>
+                                    <h2 class="fechaMensaje"><%= mensaje.Fecha %></h2><br>
+                                </div>
+                                <div class="esqOtro"></div>
+                            <% }; %>   
+                        <% }; %>
+                    </div><br>
+                    <div class="escribirMensaje">
+                        <!-- Input y botón para escribir y enviar un mensaje nuevo al chat en específico -->
+                        <form action="enviarMensaje/<%= idChatActual %>/<%= actual %>" method="post">
+                            <input type="text" name="mensajeEscrito" size="10" placeholder="Escribe un mensaje ..." required class="escribirMensajeInput">
+                            <button type="submit" value="Enviar" class="botonEnviar"><img src="/images/enviar.png" class="imageEnviar"></button>
+                        </form>
+                    </div>
+                <% }; %>        
+            </div>
+        </div>
+    </body>
+    <script>
+        /* Se scrollea los mensajes hasta el final, para visualizar el último mensaje enviado */
+        document.getElementById('scroll').scrollTop = 99999999999999999999999999999999999999;
+    </script>
+</html>
