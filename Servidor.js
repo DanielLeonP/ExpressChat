@@ -448,4 +448,5 @@ app.get('*', function (req, res) {
 });
 
 /* Se establece el puerto de conexión del servidor en el localhost:5000, y se imprime un mensaje de conexión correcta al servidor */
-app.listen(5000, () => { console.log('Servidor Web Iniciado'); });
+app.listen(process.env.PORT, () => { console.log('Servidor Web Iniciado'); });
+//app.set('port', process.env.PORT || 3000);
