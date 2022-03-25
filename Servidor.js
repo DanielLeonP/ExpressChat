@@ -1,38 +1,27 @@
-/* 
-Integrantes:
-  - García Vargas Michell Alejandro - 259663
-  - Daniel Leon Paulin - 260541
-Materia: Sistemas Distribuidos
-Fecha: 10 de diciembre del 2021
-Grupo: 30
-Semestre: 5to
-*/
-
 /* Se importan las librerias con las que va a trabajar el servidor*/
 const express = require('express'); /* Express para la creación de la API */
 const app = express(); /* Creación de la Aplicación */
 const bodyParser = require('body-parser'); /* BodyParser para poder acceder de manera sencilla a los datos POST enviados por el usuario */
-const sqlite3 = require('sqlite3'); /* SQLite3 para la creación y manejo de la Base de Datos */
 const session = require('express-session'); /* Express-Session para crear sesiones donde se almacenan los datos de la sesion de un usuario conectado */
 
 /* Creación y/o conexión con la Base de Datos */
-const db = new sqlite3.Database("./public/database/expressDB.db", (err) => {
-  if (err) { /* En caso de que no se pueda conectar, se imprime el error en consola */
-    console.log('No se puede conectar a la base de datos\n');
-    console.log(err)
-  } else { /* En caso de que si se pueda conectar, se imprime la validadción en consola */
-    console.log('Conectado a la base de datos\n');
-  }
-});
+const database = require("./database/database.js");
+db = database.conectar();
+
+/* usar rutas de Chat */
+const chatRoute = require("./routes/Chat.js");
+app.use("/Chat", chatRoute);
 
 /* .use para especificar el directorio donde se encuentran los archivos estáticos del servidor */
 app.use(express.static(__dirname + '/public'));
+
 
 /* .set para establecer la ruta/directorio donde se van a encontrar los archivos para las peticiones, y además, se especifica su extensión, renderizar páginas con parámetros */
 app.set('view engine', 'ejs');
 
 /* Formato para recibir datos de formularios HTML de manera correcta */
 app.use(bodyParser.urlencoded({ extended: false }));
+
 
 /* Se establece el id para todas las sesiones que se generen dentro del servidor, gracias a esto se pueden almacenar información en variables que se pueden utilizar específicamente del usuario conectado */
 app.use(session({
@@ -65,7 +54,7 @@ app.post('/Login', (req, res) => {
   let contrasena = req.body.contrasena;
   var idusuario;
   var admin;
-  var nombre                        
+  var nombre
   sql = 'SELECT * FROM Usuarios WHERE Correo = ?;'; /* Se consultan los usuarios que tengan el correo proporcionado */
   db.get(sql, [correo], (err, row) => {
     if (err) { /* En caso de que la consulta falle, se regresa un estatus de error y se imprime la falla */
@@ -118,7 +107,7 @@ app.post('/registro', (req, res) => {
       res.status(400);
       res.render('Registro.ejs', { validacion: 'I' });
       return;
-    }else{ /* De otra forma, se regresa un estatus correcto, y se renderiza la página de registro con parámetro válido */
+    } else { /* De otra forma, se regresa un estatus correcto, y se renderiza la página de registro con parámetro válido */
       res.status(200);
       res.render('Registro.ejs', { validacion: 'C' });
     }
@@ -207,12 +196,12 @@ app.get('/Chat/:idChat', function (req, res) {
   var usuarioActual = req.session.id_Usuario;
   sql = 'SELECT * FROM Chats c, Usuarios u, Participantes p WHERE c.IdChat = p.IdChat AND u.IdUsuario = p.IdUsuario AND u.IdUsuario = ? ORDER BY c.IdChat ASC;'; /* Se buscan los chats a los que el usuario pertenece */
   db.all(sql, [usuarioActual], (err, comprobar) => {
-    if(err){ /* En caso de que la consulta falle, se regresa un estatus de error y se imprime la falla */
+    if (err) { /* En caso de que la consulta falle, se regresa un estatus de error y se imprime la falla */
       res.status(400).json({ "error": err.message });
       return;
-    }else{
+    } else {
       comprobar.forEach((fila) => { /* Se selecciona cada chat del usuario en cuestión */
-        if(fila.IdChat == idChat) { /* Se valida que el usuario en realidad pertenezca a ese chat y no solo quiera entrar por url, y que el id del chat seleccionado si coincida con los chats donde el usuario participa */
+        if (fila.IdChat == idChat) { /* Se valida que el usuario en realidad pertenezca a ese chat y no solo quiera entrar por url, y que el id del chat seleccionado si coincida con los chats donde el usuario participa */
           sql = 'SELECT * FROM Mensajes m, Usuarios u WHERE m.IdChat = ? AND m.IdUsuario = u.IdUsuario ORDER BY m.IdMensaje ASC;'; /* Se busca y seleccionan todos los mensajes y usuarios que pertenecen al chat en específico seleccionado */
           db.all(sql, [idChat], (err, rows) => {
             if (err) { /* En caso de que la consulta falle, se regresa un estatus de error y se imprime la falla */
@@ -246,7 +235,7 @@ app.get('/Chat/:idChat', function (req, res) {
 });
 
 /* Función para enviar mensajes a un chat en específico seleccionado */
-app.post('/chat/enviarMensaje/:idChat/:idUsuario', function (req, res) {
+app.post('/Chat/enviarMensaje/:idChat/:idUsuario', function (req, res) {
   /* Variables que almacenan los datos enviados por el usuario al escribir dentro del input del chat y que almacenan los datos y id del usuario que envia el mensaje y el id del chat a donde se envían */
   var mensaje = req.body.mensajeEscrito
   var idChat = req.params.idChat;
@@ -263,7 +252,7 @@ app.post('/chat/enviarMensaje/:idChat/:idUsuario', function (req, res) {
   });
 });
 
- /* Función para crear nuevos chats y que posteriormente se puedan seleccionar los usuarios que van a participar en ese chat */
+/* Función para crear nuevos chats y que posteriormente se puedan seleccionar los usuarios que van a participar en ese chat */
 app.post('/NuevoGrupo', function (req, res) {
   /* Variables que almacenan los datos enviados por el usuario al crear un chat nuevo y de la sesión del usuario actual */
   var nombreGrupo = req.body.nombreGrupo;
@@ -276,7 +265,7 @@ app.post('/NuevoGrupo', function (req, res) {
     if (err) { /* En caso de que la consulta falle, se regresa un estatus de error y se imprime la falla */
       res.status(400).json({ "error": err.message });
       return;
-    } else { 
+    } else {
       /* Se inserta en la tabla chats el nuevo chat creado */
       db.run('INSERT INTO Chats (NombreChat) VALUES (?);', [nombreGrupo], (err, result) => {
         if (err) { /* En caso de que la inserción falle, se regresa un estatus de error y se envía un parámetro inválido */
@@ -358,70 +347,6 @@ app.post('/agregarUsuario/:idChat/:idUsuario', (req, res) => {
           }
         });
       }, 2000);
-    }
-  });
-});
-
-/* Función para eliminar mensajes del usuario en cuestión */
-app.get('/Chat/EliminarMensaje/:IdMensaje', function (req, res) {
-  var IdMensaje = req.params.IdMensaje; /* Variable para seleccioanr el mensaje que se desea eliminar */
-  sql = 'DELETE FROM Mensajes WHERE IdMensaje = ?;'; /* Se elimina el mensaje con un id específico */
-  db.run(sql, [IdMensaje], (err, result) => {
-    if (err) { /* En caso de que la consulta falle, se regresa un estatus de error y se imprime la falla */
-      res.status(400).json({ "error": err.message });
-      return;
-    } else { /* De otra forma se manda un estatus correcto y se redirige a la misma página con el mensaje ya eliminado */
-      res.status(200);
-      res.redirect(req.get('referer'));
-    }
-  });
-});
-
-/* Función para modificar el texto de un mensaje en específico del usuario en cuestión */
-app.get('/Chat/ModificarMensaje/:IdMensaje', function (req, res) {
-  /* Variables para seleccionar el mensaje que se debe modificar y el texto nuevo */
-  var IdMensaje = req.params.IdMensaje;
-  var Texto = req.query.TextoMensajeModificar
-  sql = "UPDATE Mensajes SET Texto = ? WHERE IdMensaje= ?"; /* Se modifica el texto de un mensaje en específico */
-  db.run(sql, [Texto, IdMensaje], (err, result) => {
-    if (err) { /* En caso de que la consulta falle, se regresa un estatus de error y se imprime la falla */
-      res.status(400).json({ "error": err.message });
-      return;
-    } else { /* De otra forma se manda un estatus correcto y se redirige a la misma página con el mensaje ya modificado */
-      res.status(200);
-      res.redirect(req.get('referer'));
-    }
-  });
-});
-
-/* Función para eliminar chats del usuario en cuestión */
-app.get('/Chat/EliminarChat/:IdChat', function (req, res) {
-  var IdChat = req.params.IdChat; /* Variable para seleccioanr el chat que se desea eliminar */
-  sql = 'DELETE FROM Chats WHERE IdChat = ?;'; /* Se elimina el chat con un id específico */
-  db.run(sql, [IdChat], (err, result) => {
-    if (err) { /* En caso de que la consulta falle, se regresa un estatus de error y se imprime la falla */
-      res.status(400).json({ "error": err.message });
-      return;
-    } else { /* De otra forma se redirige a la página principal donde se encuentran todos los demas chats, que aun tiene el usaurio en cuestión */
-      res.status(200);
-      res.redirect('/ExpressChat');
-    }
-  });
-});
-
-/* Función para modificar el nombre de un chat en específico del usuario en cuestión */
-app.get('/Chat/ModificarChat/:IdChat', function (req, res) {
-  /* Variables para seleccionar el chat que se debe modificar y el nombre nuevo */
-  var IdChat = req.params.IdChat;
-  var Texto = req.query.TextoChatModificar
-  sql = "UPDATE Chats SET NombreChat = ? WHERE IdChat= ?"; /* Se modifica el nombre de un chat en específico */
-  db.run(sql, [Texto, IdChat], (err, result) => {
-    if (err) { /* En caso de que la consulta falle, se regresa un estatus de error y se imprime la falla */
-      res.status(400).json({ "error": err.message });
-      return;
-    } else { /* De otra forma se manda un estatus correcto y se redirige a la misma página con el nuevo nombre del chat */
-      res.status(200);
-      res.redirect(req.get('referer'));
     }
   });
 });
